@@ -45,6 +45,10 @@ public class ScheduleCommandServiceImpl implements ScheduleCommandService {
 
     @Override
     public void deleteCustom(UUID ownerId, DeleteCustomScheduleRequest request) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        Schedule schedule = scheduleRepository
+                .findByScheduleIdAndOwnerId(request.scheduleId(), ownerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        scheduleRepository.delete(schedule);
     }
 }
