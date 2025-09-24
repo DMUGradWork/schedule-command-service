@@ -5,6 +5,7 @@ import grewmeet.schedulecommandservice.dto.CreateCustomScheduleRequest;
 import grewmeet.schedulecommandservice.dto.DeleteCustomScheduleRequest;
 import grewmeet.schedulecommandservice.dto.ScheduleResponse;
 import grewmeet.schedulecommandservice.dto.UpdateCustomScheduleRequest;
+import grewmeet.schedulecommandservice.event.publisher.ScheduleEventPublisher;
 import grewmeet.schedulecommandservice.repository.ScheduleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,7 @@ import java.util.UUID;
 public class ScheduleCommandServiceImpl implements ScheduleCommandService {
 
     private final ScheduleRepository scheduleRepository;
+    private final ScheduleEventPublisher scheduleEventPublisher;
 
     @Override
     public ScheduleResponse createCustomSchedule(UUID ownerId, CreateCustomScheduleRequest request) {
@@ -30,7 +32,9 @@ public class ScheduleCommandServiceImpl implements ScheduleCommandService {
                 request.description(),
                 request.startAt(),
                 request.endAt());
-        return ScheduleResponse.from(scheduleRepository.save(schedule));
+        Schedule saved = scheduleRepository.save(schedule);
+        scheduleEventPublisher.publishCreated(saved);
+        return ScheduleResponse.from(saved);
     }
 
     @Override
@@ -40,7 +44,8 @@ public class ScheduleCommandServiceImpl implements ScheduleCommandService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
         schedule.applyPatch(request.title(), request.description(), request.startAt(), request.endAt());
-        scheduleRepository.save(schedule);
+        Schedule saved = scheduleRepository.save(schedule);
+        scheduleEventPublisher.publishUpdated(saved);
     }
 
     @Override
@@ -50,5 +55,6 @@ public class ScheduleCommandServiceImpl implements ScheduleCommandService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
         scheduleRepository.delete(schedule);
+        scheduleEventPublisher.publishDeleted(schedule.getScheduleId(), ownerId);
     }
 }
