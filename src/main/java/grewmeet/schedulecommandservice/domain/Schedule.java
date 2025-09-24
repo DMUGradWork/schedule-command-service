@@ -1,5 +1,6 @@
 package grewmeet.schedulecommandservice.domain;
 
+import jakarta.persistence.Column;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,19 +25,21 @@ public class Schedule {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private UUID scheduleId;
 
     private UUID ownerId;
 
+    @Column(nullable = false)
     private String title;
 
     private String description;
 
+    @Column(nullable = false)
     private LocalDateTime startAt;
 
+    @Column(nullable = false)
     private LocalDateTime endAt;
-
-    private boolean allDay;
 
     @Enumerated(EnumType.STRING)
     private ScheduleSource source = ScheduleSource.CUSTOM;
@@ -65,5 +68,42 @@ public class Schedule {
                                         LocalDateTime startAt,
                                         LocalDateTime endAt) {
         return new Schedule(ownerId, scheduleId, title, description, startAt, endAt);
+    }
+
+    public void applyPatch(String title,
+                           String description,
+                           LocalDateTime startAt,
+                           LocalDateTime endAt) {
+        require(title,startAt,endAt);
+        this.title = title;
+        this.description = description;
+        this.startAt = startAt;
+        this.endAt = endAt;
+    }
+
+    private void require(String title,
+                          LocalDateTime startAt,
+                          LocalDateTime endAt) {
+        requireStartBeforeEnd(startAt, endAt);
+        requireNonBlankTitle(title);
+        requireNonZeroDuration(startAt, endAt);
+    }
+
+    private void requireStartBeforeEnd(LocalDateTime startAt, LocalDateTime endAt) {
+        if(endAt.isBefore(startAt)) {
+            throw new IllegalArgumentException("End time must be before start time");
+        }
+    }
+
+    private void requireNonBlankTitle(String title) {
+        if(title == null || title.isBlank()) {
+            throw new IllegalArgumentException("Title cannot be blank");
+        }
+    }
+
+    private void requireNonZeroDuration(LocalDateTime startAt, LocalDateTime endAt) {
+        if(startAt.equals(endAt)) {
+            throw new IllegalArgumentException("End time must have gap to start time");
+        }
     }
 }

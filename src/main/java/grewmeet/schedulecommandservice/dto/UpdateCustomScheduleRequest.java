@@ -9,7 +9,5 @@ public record UpdateCustomScheduleRequest(
         String title,
         String description,
         LocalDateTime startAt,
-        LocalDateTime endAt,
-        String location,
-        Boolean allDay
+        LocalDateTime endAt
 ) {}

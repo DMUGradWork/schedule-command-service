@@ -9,7 +9,5 @@ public record CreateCustomScheduleRequest(
         @NotBlank String title,
         String description,
         @NotNull LocalDateTime startAt,
-        @NotNull LocalDateTime endAt,
-        String location,
-        boolean allDay
+        @NotNull LocalDateTime endAt
 ) {}

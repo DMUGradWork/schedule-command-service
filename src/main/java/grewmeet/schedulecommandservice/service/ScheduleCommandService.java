@@ -10,8 +10,7 @@ import java.util.UUID;
 public interface ScheduleCommandService {
     ScheduleResponse createCustomSchedule(UUID ownerId, CreateCustomScheduleRequest request);
 
-    ScheduleResponse patchCustom(UUID ownerId, UpdateCustomScheduleRequest request);
+    void patchCustom(UUID ownerId, UpdateCustomScheduleRequest request);
 
     void deleteCustom(UUID ownerId, DeleteCustomScheduleRequest request);
 }
-

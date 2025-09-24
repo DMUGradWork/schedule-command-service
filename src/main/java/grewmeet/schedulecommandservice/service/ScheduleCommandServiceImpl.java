@@ -7,8 +7,11 @@ import grewmeet.schedulecommandservice.dto.ScheduleResponse;
 import grewmeet.schedulecommandservice.dto.UpdateCustomScheduleRequest;
 import grewmeet.schedulecommandservice.repository.ScheduleRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -31,8 +34,13 @@ public class ScheduleCommandServiceImpl implements ScheduleCommandService {
     }
 
     @Override
-    public ScheduleResponse patchCustom(UUID ownerId, UpdateCustomScheduleRequest request) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    public void patchCustom(UUID ownerId, UpdateCustomScheduleRequest request) {
+        Schedule schedule = scheduleRepository
+                .findByScheduleIdAndOwnerId(request.scheduleId(), ownerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        schedule.applyPatch(request.title(), request.description(), request.startAt(), request.endAt());
+        scheduleRepository.save(schedule);
     }
 
     @Override
@@ -40,4 +48,3 @@ public class ScheduleCommandServiceImpl implements ScheduleCommandService {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 }
-
