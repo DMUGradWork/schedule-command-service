@@ -13,11 +13,7 @@ public record ScheduleResponse(
         String title,
         String description,
         LocalDateTime startAt,
-        LocalDateTime endAt,
-        String location,
-        boolean allDay,
-        ScheduleSource source,
-        Long version
+        LocalDateTime endAt
 ) {
     public static ScheduleResponse from(Schedule s) {
         return new ScheduleResponse(
@@ -27,11 +23,7 @@ public record ScheduleResponse(
                 s.getTitle(),
                 s.getDescription(),
                 s.getStartAt(),
-                s.getEndAt(),
-                s.getLocation(),
-                s.isAllDay(),
-                s.getSource(),
-                s.getVersion()
+                s.getEndAt()
         );
     }
 }

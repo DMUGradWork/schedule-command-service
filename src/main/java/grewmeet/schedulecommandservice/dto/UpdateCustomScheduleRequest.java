@@ -1,10 +1,11 @@
 package grewmeet.schedulecommandservice.dto;
 
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record UpdateCustomScheduleRequest(
-        UUID scheduleId,
+        @NotNull UUID scheduleId,
         String title,
         String description,
         LocalDateTime startAt,

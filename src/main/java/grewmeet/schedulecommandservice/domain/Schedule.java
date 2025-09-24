@@ -36,8 +36,6 @@ public class Schedule {
 
     private LocalDateTime endAt;
 
-    private String location;
-
     private boolean allDay;
 
     @Enumerated(EnumType.STRING)
@@ -46,23 +44,26 @@ public class Schedule {
     @Version
     private Long version;
 
-    public Schedule(UUID ownerId,
-                    UUID scheduleId,
-                    String title,
-                    String description,
-                    LocalDateTime startAt,
-                    LocalDateTime endAt,
-                    String location,
-                    boolean allDay,
-                    ScheduleSource source) {
+    private Schedule(UUID ownerId,
+                     UUID scheduleId,
+                     String title,
+                     String description,
+                     LocalDateTime startAt,
+                     LocalDateTime endAt) {
         this.ownerId = ownerId;
         this.scheduleId = scheduleId;
         this.title = title;
         this.description = description;
         this.startAt = startAt;
         this.endAt = endAt;
-        this.location = location;
-        this.allDay = allDay;
-        this.source = source == null ? ScheduleSource.CUSTOM : source;
+    }
+
+    public static Schedule createCustom(UUID ownerId,
+                                        UUID scheduleId,
+                                        String title,
+                                        String description,
+                                        LocalDateTime startAt,
+                                        LocalDateTime endAt) {
+        return new Schedule(ownerId, scheduleId, title, description, startAt, endAt);
     }
 }
