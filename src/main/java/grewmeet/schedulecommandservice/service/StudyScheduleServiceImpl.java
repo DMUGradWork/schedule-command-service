@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -24,6 +25,7 @@ public class StudyScheduleServiceImpl implements StudyScheduleService {
 
     @Override
     public void register(UUID userId,
+                         UUID studyGroupId,
                          UUID meetingId,
                          String meetingName,
                          String description,
@@ -42,7 +44,7 @@ public class StudyScheduleServiceImpl implements StudyScheduleService {
             return;
         }
 
-        Schedule created = Schedule.createCustom(ownerId, scheduleId, meetingName, description, startAt, endAt);
+        Schedule created = Schedule.createStudy(ownerId, studyGroupId, meetingId, scheduleId, meetingName, description, startAt, endAt);
         Schedule saved = scheduleRepository.save(created);
         scheduleEventPublisher.publishCreated(saved);
         log.info("Study register -> Created schedule: scheduleId={}, ownerId={}", scheduleId, ownerId);
@@ -86,6 +88,44 @@ public class StudyScheduleServiceImpl implements StudyScheduleService {
         scheduleRepository.delete(schedule);
         scheduleEventPublisher.publishDeleted(scheduleId, ownerId);
         log.info("Study delete -> Deleted schedule: scheduleId={}, ownerId={}", scheduleId, ownerId);
+    }
+
+    @Override
+    public void reschedule(UUID studyGroupId,
+                           UUID meetingId,
+                           String newMeetingName,
+                           String newDescription,
+                           LocalDateTime newStartAt,
+                           LocalDateTime newEndAt) {
+        List<Schedule> schedules = scheduleRepository.findAllByStudyGroupIdAndMeetingId(studyGroupId, meetingId);
+        if (schedules.isEmpty()) {
+            log.info("Study reschedule -> No schedules found: studyGroupId={}, meetingId={}", studyGroupId, meetingId);
+            return;
+        }
+
+        for (Schedule schedule : schedules) {
+            schedule.applyPatch(newMeetingName, newDescription, newStartAt, newEndAt);
+            Schedule saved = scheduleRepository.save(schedule);
+            scheduleEventPublisher.publishUpdated(saved);
+            log.info("Study reschedule -> Updated schedule: scheduleId={}, ownerId={}", saved.getScheduleId(), saved.getOwnerId());
+        }
+    }
+
+    @Override
+    public void cancelMeeting(UUID studyGroupId, UUID meetingId) {
+        List<Schedule> schedules = scheduleRepository.findAllByStudyGroupIdAndMeetingId(studyGroupId, meetingId);
+        if (schedules.isEmpty()) {
+            log.info("Study cancel meeting -> No schedules found: studyGroupId={}, meetingId={}", studyGroupId, meetingId);
+            return;
+        }
+
+        for (Schedule schedule : schedules) {
+            UUID scheduleId = schedule.getScheduleId();
+            UUID ownerId = schedule.getOwnerId();
+            scheduleRepository.delete(schedule);
+            scheduleEventPublisher.publishDeleted(scheduleId, ownerId);
+            log.info("Study cancel meeting -> Deleted schedule: scheduleId={}, ownerId={}", scheduleId, ownerId);
+        }
     }
 
     private UUID deterministicScheduleId(UUID meetingId, UUID userId) {

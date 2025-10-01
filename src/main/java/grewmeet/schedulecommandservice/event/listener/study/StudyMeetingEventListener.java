@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import grewmeet.schedulecommandservice.event.listener.study.schema.StudyMeetingEventParticipationRegistered;
 import grewmeet.schedulecommandservice.event.listener.study.schema.StudyMeetingParticipationCancelled;
 import grewmeet.schedulecommandservice.event.listener.study.schema.StudyMeetingParticipationCompleted;
+import grewmeet.schedulecommandservice.event.listener.study.schema.StudyMeetingRescheduled;
+import grewmeet.schedulecommandservice.event.listener.study.schema.StudyMeetingCancelled;
 import grewmeet.schedulecommandservice.service.StudyScheduleService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -27,6 +29,7 @@ public class StudyMeetingEventListener {
                     objectMapper.readValue(payload, StudyMeetingEventParticipationRegistered.class);
             studyScheduleService.register(
                     event.userId(),
+                    event.studyGroupId(),
                     event.meetingId(),
                     event.meetingName(),
                     event.description(),
@@ -57,6 +60,33 @@ public class StudyMeetingEventListener {
             studyScheduleService.delete(event.userId(), event.meetingId());
         } catch (Exception e) {
             log.error("Failed to parse Study Completed payload", e);
+        }
+    }
+
+    @KafkaListener(topics = "study.meeting.rescheduled", groupId = "schedule-command-service")
+    public void onMeetingRescheduled(String payload) {
+        try {
+            StudyMeetingRescheduled event = objectMapper.readValue(payload, StudyMeetingRescheduled.class);
+            studyScheduleService.reschedule(
+                    event.studyGroupId(),
+                    event.meetingId(),
+                    event.newMeetingName(),
+                    event.newDescription(),
+                    event.newStartAt(),
+                    event.newEndAt()
+            );
+        } catch (Exception e) {
+            log.error("Failed to parse Study Rescheduled payload", e);
+        }
+    }
+
+    @KafkaListener(topics = "study.meeting.cancelled", groupId = "schedule-command-service")
+    public void onMeetingCancelled(String payload) {
+        try {
+            StudyMeetingCancelled event = objectMapper.readValue(payload, StudyMeetingCancelled.class);
+            studyScheduleService.cancelMeeting(event.studyGroupId(), event.meetingId());
+        } catch (Exception e) {
+            log.error("Failed to parse Study Meeting Cancelled payload", e);
         }
     }
 }

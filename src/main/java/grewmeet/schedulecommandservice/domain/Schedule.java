@@ -41,6 +41,10 @@ public class Schedule {
     @Column(nullable = false)
     private LocalDateTime endAt;
 
+    // STUDY origin keys (nullable)
+    private UUID studyGroupId;
+    private UUID meetingId;
+
     @Enumerated(EnumType.STRING)
     private ScheduleSource source = ScheduleSource.CUSTOM;
 
@@ -68,6 +72,21 @@ public class Schedule {
                                         LocalDateTime startAt,
                                         LocalDateTime endAt) {
         return new Schedule(ownerId, scheduleId, title, description, startAt, endAt);
+    }
+
+    public static Schedule createStudy(UUID ownerId,
+                                       UUID studyGroupId,
+                                       UUID meetingId,
+                                       UUID scheduleId,
+                                       String title,
+                                       String description,
+                                       LocalDateTime startAt,
+                                       LocalDateTime endAt) {
+        Schedule schedule = new Schedule(ownerId, scheduleId, title, description, startAt, endAt);
+        schedule.source = ScheduleSource.STUDY;
+        schedule.studyGroupId = studyGroupId;
+        schedule.meetingId = meetingId;
+        return schedule;
     }
 
     public void applyPatch(String title,
