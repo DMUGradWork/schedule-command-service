@@ -6,6 +6,7 @@ import java.util.UUID;
 public interface StudyScheduleService {
 
     void register(UUID userId,
+                  UUID studyGroupId,
                   UUID meetingId,
                   String meetingName,
                   String description,
@@ -21,4 +22,14 @@ public interface StudyScheduleService {
 
     void delete(UUID userId,
                 UUID meetingId);
+
+    void reschedule(UUID studyGroupId,
+                    UUID meetingId,
+                    String newMeetingName,
+                    String newDescription,
+                    LocalDateTime newStartAt,
+                    LocalDateTime newEndAt);
+
+    void cancelMeeting(UUID studyGroupId,
+                       UUID meetingId);
 }
