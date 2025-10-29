@@ -13,6 +13,8 @@ public record ScheduleUpdated(
         LocalDateTime startAt,
         LocalDateTime endAt,
         ScheduleSource source,
+        UUID studyGroupId,
+        UUID meetingId,
         long version,
         LocalDateTime occurredAt
 ) {}

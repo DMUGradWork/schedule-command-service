@@ -1,1 +1,28 @@
 
+server:
+  port: 8081
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        # 이벤트 페이로드를 깔끔한 JSON으로 전송(타입 헤더 제거)
+        spring.json.add.type.headers: true
+        # 날짜/시간을 ISO-8601 문자열로 직렬화(타임스탬프 금지)
+        spring.json.write_dates_as_timestamps: false
+    # 소비자는 현재 사용 안 함(향후 Query Side 리스너 추가 시 설정)
+  consumer:
+    group-id: schedule-command-service
+    key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+app:
+  study:
+    topics:
+      participation-registered: study.meeting.participation.registered
+      participation-cancelled: study.meeting.participation.cancelled
+      participation-completed: study.meeting.participation.completed
+
