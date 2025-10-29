@@ -1,35 +1,39 @@
 version: '3.8'
 
 services:
-  # 1. Kafka 브로커 (Zookeeper 없는 KRaft 모드)
+  # 1. Zookeeper (Kafka 관리자)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: schedule-zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - schedule-network
+
+  # 2. Kafka 브로커
   # Spring 앱에서는 localhost:9092 로 접속합니다.
   kafka:
-    image: bitnami/kafka:latest
+    image: confluentinc/cp-kafka:7.4.0
     container_name: schedule-kafka-broker
     ports:
-      - "9092:9092" # Kafka API 포트
+      - "9092:9092"
+    depends_on:
+      - zookeeper # Zookeeper가 먼저 실행된 후 실행
     networks:
       - schedule-network
     environment:
-      # KRaft 모드 활성화
-      - KAFKA_ENABLE_KRAFT=yes
-      - KAFKA_CFG_PROCESS_ROLES=broker,controller
-      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
-      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
-      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      # 로컬 Spring 앱에서 접속할 주소
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
-      # 클러스터 설정 (단일 노드)
-      - KAFKA_BROKER_ID=1
-      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
-      # Zookeeper 비활성화
-      - KAFKA_CFG_ZOOKEEPER_CONNECT_ENABLED=false
-      # 토픽 자동 생성 활성화 (테스트용)
-      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
-      - ALLOW_PLAINTEXT_LISTENER=yes
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181 # 컨테이너 이름으로 Zookeeper를 찾음
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
 
-  # 2. MongoDB (Schedule Query 데이터베이스)
-  # Spring 앱에서는 mongodb://root:root@localhost:27017/schedule_query 로 접속합니다.
+  # 3. MongoDB (Schedule Query 데이터베이스)
   mongodb:
     image: mongo:7.0
     container_name: schedule-query-mongodb
@@ -45,8 +49,7 @@ services:
     networks:
       - schedule-network
 
-  # 3. Mongo Express (DB 관리용 웹 UI)
-  # 웹 브라우저에서 http://localhost:8083 으로 접속합니다.
+  # 4. Mongo Express (DB 관리용 웹 UI)
   mongo-express:
     image: mongo-express:1.0.0
     container_name: schedule-query-mongo-express
@@ -56,7 +59,6 @@ services:
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: root
       ME_CONFIG_MONGODB_ADMINPASSWORD: root
-      # 컨테이너 네트워크 내부에서 mongodb 서비스 이름으로 접속
       ME_CONFIG_MONGODB_URL: mongodb://root:root@mongodb:27017/
       ME_CONFIG_BASICAUTH: false
     depends_on:
@@ -65,8 +67,8 @@ services:
       - schedule-network
 
 volumes:
-  mongodb_data: # MongoDB 데이터를 저장할 볼륨
+  mongodb_data:
 
 networks:
-  schedule-network: # 모든 컨테이너가 소통할 네트워크
+  schedule-network:
     driver: bridge
