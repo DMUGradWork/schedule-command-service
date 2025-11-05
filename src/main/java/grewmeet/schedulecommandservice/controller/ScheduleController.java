@@ -30,7 +30,7 @@ public class ScheduleController {
 
     @PostMapping("/custom")
     public ResponseEntity<ScheduleResponse> createCustomSchedule(
-            @RequestHeader("X-Owner-Id") UUID ownerId,
+            @RequestHeader("X-User-Id") UUID ownerId,
             @RequestBody @Valid CreateCustomScheduleRequest request) {
         ScheduleResponse created = scheduleCommandService.createCustomSchedule(ownerId, request);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -40,7 +40,7 @@ public class ScheduleController {
 
     @PatchMapping("/custom")
     public ResponseEntity<Void> updateCustomSchedule(
-            @RequestHeader("X-Owner-Id") UUID ownerId,
+            @RequestHeader("X-User-Id") UUID ownerId,
             @RequestBody @Valid UpdateCustomScheduleRequest request) {
         scheduleCommandService.patchCustom(ownerId, request);
         return ResponseEntity.noContent().build();
@@ -48,7 +48,7 @@ public class ScheduleController {
 
     @DeleteMapping("/custom")
     public ResponseEntity<Void> deleteCustomSchedule(
-            @RequestHeader("X-Owner-Id") UUID ownerId,
+            @RequestHeader("X-User-Id") UUID ownerId,
             @RequestBody @Valid DeleteCustomScheduleRequest request) {
         scheduleCommandService.deleteCustom(ownerId, request);
         return ResponseEntity.noContent().build();

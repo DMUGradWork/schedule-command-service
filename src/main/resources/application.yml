@@ -26,3 +26,17 @@ app:
       participation-cancelled: study.meeting.participation.cancelled
       participation-completed: study.meeting.participation.completed
 
+mysql-schedule:
+  image: mysql:8.0
+  environment:
+    MYSQL_DATABASE: schedule_command
+    MYSQL_ROOT_PASSWORD: root
+
+  schedule-command-service:
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-schedule:3306/schedule_command
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+    depends_on:
+      mysql-schedule:
+        condition: service_healthy

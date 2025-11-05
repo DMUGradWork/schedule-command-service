@@ -33,6 +33,7 @@ public class ScheduleEventPublisherImpl implements ScheduleEventPublisher {
                 schedule.getSource(),
                 schedule.getStudyGroupId(),
                 schedule.getMeetingId(),
+                schedule.getDatingMeetingUuid(),
                 getVersionOrDefault(schedule.getVersion()),
                 LocalDateTime.now()
         );
@@ -51,6 +52,7 @@ public class ScheduleEventPublisherImpl implements ScheduleEventPublisher {
                 schedule.getSource(),
                 schedule.getStudyGroupId(),
                 schedule.getMeetingId(),
+                schedule.getDatingMeetingUuid(),
                 getVersionOrDefault(schedule.getVersion()),
                 LocalDateTime.now()
         );

@@ -1,6 +1,6 @@
 # Schedule Command Service
 
-스케줄 도메인의 명령 서비스 (커스텀 일정 생성/수정/삭제 + 외부 도메인(Study) 이벤트 기반 일정 동기화)
+스케줄 도메인의 명령 서비스 (커스텀 일정 생성/수정/삭제 + 외부 도메인(Study, Dating) 이벤트 기반 일정 동기화)
 
 ## 🔧 환경 설정
 - 포트: 8080 (기본값)
@@ -106,10 +106,173 @@ public record StudyMeetingParticipationCompleted(
 ```
 </details>
 
+<details>
+<summary><strong>StudyMeetingRescheduled</strong> - Study Service에서 수신</summary>
+
+Record 클래스:
+
+```java
+// 📁 event/listener/study/schema/StudyMeetingRescheduled.java
+public record StudyMeetingRescheduled(
+    UUID studyGroupId,
+    UUID meetingId,
+    String newMeetingName,
+    String newDescription,
+    LocalDateTime newStartAt,
+    LocalDateTime newEndAt
+) {}
+```
+</details>
+
+<details>
+<summary><strong>StudyMeetingCancelled</strong> - Study Service에서 수신</summary>
+
+Record 클래스:
+
+```java
+// 📁 event/listener/study/schema/StudyMeetingCancelled.java
+public record StudyMeetingCancelled(
+    UUID studyGroupId,
+    UUID meetingId
+) {}
+```
+</details>
+
+<details>
+<summary><strong>DatingMeetingParticipantJoined</strong> - Dating Service에서 수신</summary>
+
+Record 클래스:
+
+```java
+// 📁 event/listener/dating/schema/DatingMeetingParticipantJoined.java
+public record DatingMeetingParticipantJoined(
+    UUID meetingUuid,
+    UUID authUserId,
+    String gender,
+    String meetingTitle,
+    LocalDateTime meetingDateTime,
+    LocalDateTime joinedAt
+) {}
+```
+
+예시 JSON:
+
+```json
+{
+  "meetingUuid": "550e8400-e29b-41d4-a716-446655440000",
+  "authUserId": "650e8400-e29b-41d4-a716-446655440001",
+  "gender": "MALE",
+  "meetingTitle": "인코딩 테스트 미팅",
+  "meetingDateTime": "2025-12-01T19:00:00",
+  "joinedAt": "2025-11-04T18:20:00"
+}
+```
+</details>
+
+<details>
+<summary><strong>DatingMeetingParticipantLeft</strong> - Dating Service에서 수신</summary>
+
+Record 클래스:
+
+```java
+// 📁 event/listener/dating/schema/DatingMeetingParticipantLeft.java
+public record DatingMeetingParticipantLeft(
+    UUID meetingUuid,
+    UUID authUserId,
+    String gender,
+    LocalDateTime leftAt
+) {}
+```
+
+예시 JSON:
+
+```json
+{
+  "meetingUuid": "550e8400-e29b-41d4-a716-446655440000",
+  "authUserId": "650e8400-e29b-41d4-a716-446655440001",
+  "gender": "MALE",
+  "leftAt": "2025-11-04T18:45:00"
+}
+```
+</details>
+
+<details>
+<summary><strong>DatingMeetingUpdated</strong> - Dating Service에서 수신</summary>
+
+Record 클래스:
+
+```java
+// 📁 event/listener/dating/schema/DatingMeetingUpdated.java
+public record DatingMeetingUpdated(
+    UUID meetingUuid,
+    String title,
+    String description,
+    LocalDateTime meetingDateTime,
+    String location,
+    Integer maxMaleParticipants,
+    Integer maxFemaleParticipants,
+    Integer currentMaleParticipants,
+    Integer currentFemaleParticipants,
+    LocalDateTime updatedAt
+) {}
+```
+
+예시 JSON:
+
+```json
+{
+  "meetingUuid": "550e8400-e29b-41d4-a716-446655440000",
+  "title": "수정된 제목",
+  "description": "수정된 설명",
+  "meetingDateTime": "2025-12-15T20:00:00",
+  "location": "서울시 종로구",
+  "maxMaleParticipants": 7,
+  "maxFemaleParticipants": 7,
+  "currentMaleParticipants": 1,
+  "currentFemaleParticipants": 1,
+  "updatedAt": "2025-11-04T18:23:28.061821"
+}
+```
+</details>
+
+<details>
+<summary><strong>DatingMeetingDeleted</strong> - Dating Service에서 수신</summary>
+
+Record 클래스:
+
+```java
+// 📁 event/listener/dating/schema/DatingMeetingDeleted.java
+public record DatingMeetingDeleted(
+    UUID meetingUuid,
+    LocalDateTime deletedAt
+) {}
+```
+
+예시 JSON:
+
+```json
+{
+  "meetingUuid": "550e8400-e29b-41d4-a716-446655440000",
+  "deletedAt": "2025-11-04T18:35:00"
+}
+```
+</details>
+
 처리 규칙
+
+**Study 이벤트:**
 - Registered → 일정 생성 또는 업서트
 - Cancelled/Completed → 일정 삭제
+- Rescheduled → 해당 studyGroupId와 meetingId를 가진 모든 일정 수정
+- MeetingCancelled → 해당 studyGroupId와 meetingId를 가진 모든 일정 삭제
 - scheduleId 결정: UUID.nameUUIDFromBytes("study:"+meetingId+":"+userId)
+
+**Dating 이벤트:**
+- ParticipantJoined → 해당 유저의 일정 생성 또는 업서트 (기본 길이: 3시간)
+- ParticipantLeft → 해당 유저의 일정 삭제
+- MeetingUpdated → 해당 meetingUuid를 가진 모든 참가자의 일정 수정
+- MeetingDeleted → 해당 meetingUuid를 가진 모든 참가자의 일정 삭제
+- scheduleId 결정: UUID.nameUUIDFromBytes("dating:"+meetingUuid+":"+userId)
 
 ### 🔼 발행 이벤트 (Outgoing Events)
 
@@ -133,6 +296,9 @@ public record ScheduleCreated(
     LocalDateTime startAt,
     LocalDateTime endAt,
     ScheduleSource source, // 내부 enum — 이벤트에서 사용 여부 미정
+    UUID studyGroupId,  // STUDY source용 필드 (nullable)
+    UUID meetingId,     // STUDY source용 필드 (nullable)
+    UUID datingMeetingUuid,  // DATING source용 필드 (nullable)
     long version,
     LocalDateTime occurredAt
 ) {}
@@ -176,6 +342,9 @@ public record ScheduleUpdated(
     LocalDateTime startAt,
     LocalDateTime endAt,
     ScheduleSource source, // 내부 enum — 이벤트에서 사용 여부 미정
+    UUID studyGroupId,  // STUDY source용 필드 (nullable)
+    UUID meetingId,     // STUDY source용 필드 (nullable)
+    UUID datingMeetingUuid,  // DATING source용 필드 (nullable)
     long version,
     LocalDateTime occurredAt
 ) {}
@@ -229,19 +398,19 @@ public record ScheduleDeleted(
 
 ### 커스텀 일정 관리
 - POST `/schedules/custom` — 새 일정 생성
-  - Header: `X-Owner-Id: <UUID>`
+  - Header: `X-User-Id: <UUID>`
   - Body: { title, description?, startAt, endAt }
 - PATCH `/schedules/custom` — 일정 수정
-  - Header: `X-Owner-Id: <UUID>`
+  - Header: `X-User-Id: <UUID>`
   - Body: { scheduleId, title, description?, startAt, endAt }
 - DELETE `/schedules/custom` — 일정 삭제
-  - Header: `X-Owner-Id: <UUID>`
+  - Header: `X-User-Id: <UUID>`
   - Body: { scheduleId }
 
 ## 🏗️ 아키텍처
 - CQRS Command Side(쓰기 전용)
 - Event-Driven Architecture(Kafka 기반 이벤트 수신/발행)
-- Event Listener Pattern(Study 도메인 이벤트 구독)
+- Event Listener Pattern(Study, Dating 도메인 이벤트 구독)
 - JSON 직렬화(ISO‑8601 문자열, 타입 헤더 제거)
 
 ## 🔒 핵심 제약사항

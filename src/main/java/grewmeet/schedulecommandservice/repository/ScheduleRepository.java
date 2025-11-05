@@ -10,4 +10,5 @@ import java.util.UUID;
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     Optional<Schedule> findByScheduleIdAndOwnerId(UUID scheduleId, UUID ownerId);
     List<Schedule> findAllByStudyGroupIdAndMeetingId(UUID studyGroupId, UUID meetingId);
+    List<Schedule> findAllByDatingMeetingUuid(UUID datingMeetingUuid);
 }

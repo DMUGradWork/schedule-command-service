@@ -45,6 +45,9 @@ public class Schedule {
     private UUID studyGroupId;
     private UUID meetingId;
 
+    // DATING origin keys (nullable)
+    private UUID datingMeetingUuid;
+
     @Enumerated(EnumType.STRING)
     private ScheduleSource source = ScheduleSource.CUSTOM;
 
@@ -86,6 +89,19 @@ public class Schedule {
         schedule.source = ScheduleSource.STUDY;
         schedule.studyGroupId = studyGroupId;
         schedule.meetingId = meetingId;
+        return schedule;
+    }
+
+    public static Schedule createDating(UUID ownerId,
+                                        UUID datingMeetingUuid,
+                                        UUID scheduleId,
+                                        String title,
+                                        String description,
+                                        LocalDateTime startAt,
+                                        LocalDateTime endAt) {
+        Schedule schedule = new Schedule(ownerId, scheduleId, title, description, startAt, endAt);
+        schedule.source = ScheduleSource.DATING;
+        schedule.datingMeetingUuid = datingMeetingUuid;
         return schedule;
     }
 
